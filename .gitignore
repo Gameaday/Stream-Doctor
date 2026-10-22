@@ -1,0 +1,31 @@
+# Build output
+bin/
+obj/
+artifacts/
+TestResults/
+*.binlog
+*.log
+
+# Local SDKs / tool caches (the Linux sandbox installs .NET here)
+.dotnet/
+.nuget/
+.packages/
+
+# IDE
+.vs/
+.idea/
+*.user
+*.suo
+*.DotSettings.user
+
+# Local databases, snapshots and diagnostics output (never commit user data)
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+snapshots/
+diagnostics/
+
+# OS noise
+.DS_Store
+Thumbs.db

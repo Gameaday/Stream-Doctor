@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>StreamDoctor.Core</RootNamespace>
+    <AssemblyName>StreamDoctor.Core</AssemblyName>
+    <Description>Stream Doctor domain model, evidence correlation and diagnosis rules. Pure, I/O-free and fully unit-testable.</Description>
+  </PropertyGroup>
+
+</Project>
