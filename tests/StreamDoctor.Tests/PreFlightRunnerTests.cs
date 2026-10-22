@@ -21,6 +21,7 @@ public sealed class PreFlightRunnerTests
                     Events = UsbTopologyEvents.FromTopology(topology),
                     Topology = topology,
                     PowerSnapshots = [new UsbPowerSnapshot(mic, new UsbPowerSettings { SelectiveSuspendEnabled = true })],
+                    PowerPlan = new PowerPlanInfo("Balanced", "381b4222-f694-41f0-9685-ff5bb260df2e", IsHighPerformance: false),
                 })),
                 new FakeSource("system", ScanModule.DiskRecording, _ => Task.FromResult(new ScanSourceResult
                 {
@@ -37,6 +38,8 @@ public sealed class PreFlightRunnerTests
         Assert.Contains(ScanModule.DiskRecording, report.ScannedModules);
         Assert.NotNull(report.Topology);
         Assert.Single(report.Topology.Peripherals);
+        Assert.Single(report.PowerSnapshots);
+        Assert.NotNull(report.PowerPlan);
         Assert.Contains(report.Diagnosis.Findings, finding => finding.HypothesisId == "usb.power.selective-suspend");
         Assert.Contains(report.Diagnosis.Findings, finding => finding.HypothesisId == "disk.low-space");
         Assert.True(report.Duration >= TimeSpan.Zero);

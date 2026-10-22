@@ -52,6 +52,8 @@ public sealed class ScanService
         {
             Events = report.Events,
             Topology = report.Topology,
+            PowerSnapshots = report.PowerSnapshots,
+            PowerPlan = report.PowerPlan,
             Obs = scopedDocument,
             ScannedModules = report.ScannedModules,
             WindowStart = scopedSession.StartedAt,

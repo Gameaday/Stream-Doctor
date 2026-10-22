@@ -69,12 +69,7 @@ public static class ScanEventPayload
     public const string Rate = "rate";
     public const string Utilization = "utilization";
     public const string Devices = "devices";
-    public const string WindowsEventId = "windows.eventId";
-    public const string WindowsProvider = "windows.provider";
     public const string TotalFrames = "totalFrames";
-    public const string Width = "width";
-    public const string Height = "height";
-    public const string Fps = "fps";
     public const string Plan = "plan";
     public const string Drive = "drive";
     public const string FreeBytes = "freeBytes";

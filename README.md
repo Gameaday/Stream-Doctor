@@ -4,7 +4,7 @@ A Windows diagnostic and repair app for Twitch streamers — the pre-flight and 
 
 **v1 never runs during gameplay or while you are live.** No resident agent, no hooking, no kernel driver, no anti-cheat exposure.
 
-Read the [product design document](Stream-Doctor-Product-Design-Document.md) and the [design review](docs/design-review.md) (verdict: no blocking faults; six issues found and mitigated).
+Read the [product design document](Stream-Doctor-Product-Design-Document.md) and the [design review](docs/design-review.md) (verdict: no blocking faults; five corrections and one spec gap).
 
 ---
 
@@ -32,7 +32,7 @@ src/StreamDoctor.Core        Domain model, USB analyses, OBS parser, rules engin
 src/StreamDoctor.Windows     All CsWin32/WMI/registry/event-log interop and the sweep composition root
 src/StreamDoctor.Fixes       Playbook catalog, guards, journaled executor, SQLite journal, effector interface
 src/StreamDoctor.App         WinUI 3 dashboard (MVVM via CommunityToolkit.Mvvm, Serilog file logging)
-tests/StreamDoctor.Tests     xUnit: 168 tests, golden-file OBS fixtures, fakes for collectors/effectors
+tests/StreamDoctor.Tests     xUnit: 171 tests, golden-file OBS fixtures, fakes for collectors/effectors
 docs/design-review.md        Review of the product design document and the decisions taken
 ```
 

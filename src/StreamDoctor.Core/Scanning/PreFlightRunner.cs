@@ -108,6 +108,8 @@ public sealed class PreFlightRunner
             CompletedAt = DateTimeOffset.UtcNow,
             Obs = obs,
             Topology = topology,
+            PowerSnapshots = powerSnapshots,
+            PowerPlan = powerPlan,
         };
     }
 }

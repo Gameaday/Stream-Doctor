@@ -95,6 +95,12 @@ public sealed record ScanReport
 
     public UsbTopology? Topology { get; init; }
 
+    /// <summary>Power flags read during the sweep, so post-flight can re-run the audit.</summary>
+    public IReadOnlyList<UsbPowerSnapshot> PowerSnapshots { get; init; } = [];
+
+    /// <summary>Active power plan read during the sweep.</summary>
+    public PowerPlanInfo? PowerPlan { get; init; }
+
     public TimeSpan Duration => CompletedAt - StartedAt;
 
     /// <summary>True when every required collector produced data.</summary>

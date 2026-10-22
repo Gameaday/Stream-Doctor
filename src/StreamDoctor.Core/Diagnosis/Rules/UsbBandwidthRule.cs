@@ -81,7 +81,7 @@ public sealed class UsbBandwidthRule : IFindingRule
                 {
                     ["target"] = controller.InstanceId,
                     [ScanEventPayload.Controller] = controller.Name,
-                    ["devices"] = names,
+                    [ScanEventPayload.Devices] = names,
                     [ScanEventPayload.Utilization] = Percent(load.Utilization),
                 }),
             };

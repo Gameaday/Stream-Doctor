@@ -129,21 +129,3 @@ public sealed class PostFlightAnalyzer
         return scanned;
     }
 }
-
-/// <summary>Convenience composition used by the app and by tests.</summary>
-public static class DefaultRuleSet
-{
-    public static IReadOnlyList<IFindingRule> Create() =>
-    [
-        new UsbBandwidthRule(),
-        new UsbPowerRule(),
-        new UsbDropoutRule(),
-        new UsbTopologyChangeRule(),
-        new UsbDeviceProblemRule(),
-        new ObsFrameHealthRule(),
-        new ObsPluginFailureRule(),
-        new ObsSampleRateRule(),
-        new DiskSpaceRule(),
-        new WindowsInterferenceRule(),
-    ];
-}
