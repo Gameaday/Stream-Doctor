@@ -1,0 +1,5 @@
+23:50:00.000: ==== Streaming Start ===============================================
+23:58:00.000: Switched to scene 'Late Night'
+23:59:30.000: Output 'simple_stream': Total frames output: 100
+00:20:00.000: Output 'simple_stream': Number of dropped frames due to insufficient bandwidth: 5 (0.5%)
+00:20:01.000: ==== Streaming Stop ==========================================

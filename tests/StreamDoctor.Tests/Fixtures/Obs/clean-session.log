@@ -1,0 +1,25 @@
+OBS 31.0.1 (64-bit, windows)
+17:00:00.000: ------------------------------------------------
+17:00:00.100: audio settings reset:
+17:00:00.100: 	samples per sec: 48000
+17:00:00.200: video settings reset:
+17:00:00.200: 	base resolution: 1920x1080
+17:00:00.200: 	output resolution: 1920x1080
+17:00:00.200: 	fps: 60
+17:00:00.300: Loaded Modules:
+17:00:00.300: 	obs-websocket.dll
+17:00:00.300: 	win-capture.dll
+19:59:00.000: Switched to scene 'Starting Soon'
+20:00:00.000: ==== Streaming Start ===============================================
+20:00:01.000: [rtmp stream: 'simple_stream'] Connecting to RTMP URL rtmp://live.twitch.tv/app/live_000000_clean
+20:00:05.000: Switched to scene 'Gameplay'
+20:00:07.000: [win-wasapi: 'Mic/Aux'] Device 'Microphone (USB Audio Device)' invalidated.  Retrying (1)
+20:00:09.000: [win-wasapi: 'Mic/Aux'] Device 'Microphone (USB Audio Device)' found
+21:30:00.000: Switched to scene 'Just Chatting'
+21:59:00.000: Output 'simple_stream': stopping
+21:59:00.000: Output 'simple_stream': stopped
+21:59:00.000: Output 'simple_stream': Total frames output: 213000
+22:00:00.000: Output 'simple_stream': Number of dropped frames due to insufficient bandwidth: 0 (0.0%)
+22:00:00.000: Output 'simple_stream': Number of lagged frames due to rendering lag/stalls: 0 (0.0%)
+22:00:00.000: Video stopped, number of skipped frames due to encoding lag: 0/214000 (0.0%)
+22:00:01.000: ==== Streaming Stop ==========================================

@@ -6,6 +6,9 @@ TestResults/
 *.binlog
 *.log
 
+# ...but OBS log fixtures are test data and must be committed
+!tests/**/Fixtures/**/*.log
+
 # Local SDKs / tool caches (the Linux sandbox installs .NET here)
 .dotnet/
 .nuget/

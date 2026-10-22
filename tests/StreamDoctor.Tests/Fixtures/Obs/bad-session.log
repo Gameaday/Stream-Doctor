@@ -1,0 +1,33 @@
+OBS 31.0.1 (64-bit, windows)
+19:00:00.000: ------------------------------------------------
+19:00:00.000: audio settings reset:
+19:00:00.000: 	samples per sec: 44100
+19:00:00.500: video settings reset:
+19:00:00.500: 	base resolution: 2560x1440
+19:00:00.500: 	output resolution: 1920x1080
+19:00:00.500: 	fps: 60
+19:00:01.000: Loaded Modules:
+19:00:01.000: 	obs-websocket.dll
+19:00:01.000: 	obs-browser.dll
+19:00:02.000: Failed to load module 'obs-vintage-filter.dll'
+19:30:00.000: Switched to scene 'Starting Soon 4K'
+20:00:00.000: ==== Streaming Start ===============================================
+20:00:02.000: [rtmp stream: 'simple_stream'] Connecting to RTMP URL rtmp://live.twitch.tv/app/live_123_secret_key
+20:05:00.000: Switched to scene 'Starting Soon 4K'
+20:05:30.000: [win-wasapi: 'Mic/Aux'] Device 'Microphone (USB Audio Device)' invalidated.  Retrying (1)
+20:05:40.000: [win-wasapi: 'Mic/Aux'] Device 'Microphone (USB Audio Device)' invalidated.  Retrying (2)
+20:06:00.000: [win-wasapi: 'Mic/Aux'] Device 'Microphone (USB Audio Device)' invalidated.  Retrying (3)
+20:06:10.000: [win-wasapi: 'Mic/Aux'] Device 'Microphone (USB Audio Device)' found
+21:00:00.000: Switched to scene 'Gameplay'
+22:00:00.000: Output 'simple_stream': stopping
+22:00:00.000: Output 'simple_stream': stopped
+22:00:00.000: Output 'simple_stream': Total frames output: 216000
+22:00:00.000: Output 'simple_stream': Number of dropped frames due to insufficient bandwidth: 9000 (4.2%)
+22:00:00.000: Output 'simple_stream': Number of lagged frames due to rendering lag/stalls: 2000 (0.9%)
+22:00:00.000: Video stopped, number of skipped frames due to encoding lag: 400/226000 (0.2%)
+22:00:01.000: ==== Streaming Stop ==========================================
+22:00:05.000: ==== Recording Start ==========================================
+22:00:06.000: [ffmpeg muxer: 'simple_file_output'] Output of file 'C:/Videos/2026-03-15 22-00-05.mkv' stopped
+22:45:00.000: Output 'simple_file_output': stopping
+22:45:00.000: Output 'simple_file_output': Number of lagged frames due to rendering lag/stalls: 12 (0.08%)
+22:45:01.000: ==== Recording Stop ==========================================
