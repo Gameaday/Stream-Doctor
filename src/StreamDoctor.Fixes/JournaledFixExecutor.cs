@@ -105,9 +105,14 @@ public sealed partial class JournaledFixExecutor
 
             try
             {
-                await _applier.ApplyAsync(action, before, cancellationToken).ConfigureAwait(false);
+                var appliedValue = await _applier.ApplyAsync(action, before, cancellationToken).ConfigureAwait(false);
 
-                entry = entry with { State = ChangeState.Applied };
+                entry = entry with
+                {
+                    State = ChangeState.Applied,
+                    AfterValue = appliedValue ?? action.DesiredValue,
+                };
+
                 await _store.UpdateAsync(entry, cancellationToken).ConfigureAwait(false);
                 journal[^1] = entry;
             }

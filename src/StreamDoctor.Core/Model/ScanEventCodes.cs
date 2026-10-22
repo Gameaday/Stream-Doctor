@@ -47,6 +47,12 @@ public static class ScanEventCodes
     public const string HardwareObserved = "system.hardware.observed";
     public const string DriverObserved = "system.driver.observed";
     public const string WindowsUpdateInstalled = "windows.update.installed";
+
+    // Update evidence
+    public const string UpdateAvailable = "update.available";
+    public const string UpdateBlocked = "update.blocked";
+    public const string UpdateInstalledKnownBad = "update.installed-known-bad";
+    public const string UpdateVendorGuided = "update.vendor-guided";
 }
 
 /// <summary>Well-known payload keys, shared by collectors, rules and the UI.</summary>
@@ -80,4 +86,11 @@ public static class ScanEventPayload
     public const string EventId = "eventId";
 
     public const string FixPlaybook = "fix.playbook";
+    public const string UpdateId = "update.id";
+    public const string UpdateKind = "update.kind";
+    public const string UpdateSource = "update.source";
+    public const string InstalledVersion = "update.installedVersion";
+    public const string AvailableVersion = "update.availableVersion";
+    public const string UpdateDecision = "update.decision";
+    public const string VendorTool = "update.vendorTool";
 }

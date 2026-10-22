@@ -1,6 +1,7 @@
 using StreamDoctor.Core.Diagnosis;
 using StreamDoctor.Core.Model;
 using StreamDoctor.Core.Obs;
+using StreamDoctor.Core.Updates;
 using StreamDoctor.Core.Usb;
 
 namespace StreamDoctor.Core.Scanning;
@@ -14,17 +15,24 @@ public sealed class PreFlightRunner
 {
     private readonly IReadOnlyList<IScanSource> _sources;
     private readonly DiagnosisEngine _engine;
+    private readonly UpdatePolicy _updatePolicy;
 
-    public PreFlightRunner(IEnumerable<IScanSource> sources, DiagnosisEngine engine)
+    public PreFlightRunner(
+        IEnumerable<IScanSource> sources,
+        DiagnosisEngine engine,
+        UpdatePolicy? updatePolicy = null)
     {
         ArgumentNullException.ThrowIfNull(sources);
         ArgumentNullException.ThrowIfNull(engine);
 
         _sources = sources.ToList();
         _engine = engine;
+        _updatePolicy = updatePolicy ?? UpdatePolicy.Safe;
     }
 
     public IReadOnlyList<IScanSource> Sources => _sources;
+
+    public UpdatePolicy UpdatePolicy => _updatePolicy;
 
     public async Task<ScanReport> RunAsync(ScanRequest request, CancellationToken cancellationToken = default)
     {
@@ -39,6 +47,7 @@ public sealed class PreFlightRunner
         var powerSnapshots = new List<UsbPowerSnapshot>();
         PowerPlanInfo? powerPlan = null;
         ObsLogDocument? obs = null;
+        var updates = new List<UpdateCandidate>();
 
         foreach (var source in _sources)
         {
@@ -63,6 +72,7 @@ public sealed class PreFlightRunner
                 powerSnapshots.AddRange(result.PowerSnapshots);
                 powerPlan ??= result.PowerPlan;
                 obs ??= result.Obs;
+                updates.AddRange(result.Updates);
             }
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
@@ -91,6 +101,8 @@ public sealed class PreFlightRunner
             PowerSnapshots = powerSnapshots,
             PowerPlan = powerPlan,
             Obs = obs,
+            Updates = updates,
+            UpdatePlan = UpdatePlanner.Plan(updates, _updatePolicy),
             ScannedModules = scanned,
             WindowStart = request.WindowStart,
             WindowEnd = request.WindowEnd,
@@ -110,6 +122,8 @@ public sealed class PreFlightRunner
             Topology = topology,
             PowerSnapshots = powerSnapshots,
             PowerPlan = powerPlan,
+            Updates = context.Updates,
+            UpdatePlan = context.UpdatePlan,
         };
     }
 }

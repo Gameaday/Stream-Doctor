@@ -1,5 +1,6 @@
 using StreamDoctor.Core.Model;
 using StreamDoctor.Core.Obs;
+using StreamDoctor.Core.Updates;
 using StreamDoctor.Core.Usb;
 
 namespace StreamDoctor.Core.Scanning;
@@ -48,6 +49,9 @@ public sealed record ScanSourceResult
     public PowerPlanInfo? PowerPlan { get; init; }
 
     public ObsLogDocument? Obs { get; init; }
+
+    /// <summary>Update candidates discovered by this collector.</summary>
+    public IReadOnlyList<UpdateCandidate> Updates { get; init; } = [];
 
     /// <summary>Human-readable note for the UI (e.g. "OBS was not installed").</summary>
     public string? Note { get; init; }
@@ -100,6 +104,12 @@ public sealed record ScanReport
 
     /// <summary>Active power plan read during the sweep.</summary>
     public PowerPlanInfo? PowerPlan { get; init; }
+
+    /// <summary>Available updates discovered during the sweep.</summary>
+    public IReadOnlyList<UpdateCandidate> Updates { get; init; } = [];
+
+    /// <summary>What the update policy allows for those updates.</summary>
+    public UpdatePlan? UpdatePlan { get; init; }
 
     public TimeSpan Duration => CompletedAt - StartedAt;
 

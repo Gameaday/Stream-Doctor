@@ -20,5 +20,7 @@ public static class DefaultRuleSet
         new Rules.ObsSampleRateRule(),
         new Rules.DiskSpaceRule(),
         new Rules.WindowsInterferenceRule(),
+        new Rules.UpdateAvailableRule(),
+        new Rules.InstalledKnownIssueRule(),
     ];
 }

@@ -1,7 +1,9 @@
 using StreamDoctor.Core.Diagnosis;
+using StreamDoctor.Core.Fixes;
 using StreamDoctor.Core.Model;
 using StreamDoctor.Core.PostFlight;
 using StreamDoctor.Core.Scanning;
+using StreamDoctor.Core.Updates;
 using StreamDoctor.Core.Usb;
 
 namespace StreamDoctor.Tests;
@@ -101,6 +103,37 @@ public sealed class PreFlightRunnerTests
         Assert.True(report.IsComplete);
         var failure = Assert.Single(report.Failures);
         Assert.True(failure.Optional);
+    }
+
+    [Fact]
+    public async Task RunAsync_PlansUpdatesAndFeedsTheDiagnosis()
+    {
+        var candidate = new UpdateCandidate
+        {
+            Id = "OBSProject.OBSStudio",
+            Name = "OBS Studio",
+            Kind = UpdateKind.Application,
+            Source = UpdateSource.Winget,
+            InstalledVersion = "31.0.1",
+            AvailableVersion = "31.0.2",
+        };
+
+        var runner = new PreFlightRunner(
+            [new FakeSource("updates", ScanModule.StreamingSoftware, _ => Task.FromResult(new ScanSourceResult
+            {
+                Updates = [candidate],
+            }))],
+            new DiagnosisEngine(DefaultRuleSet.Create()));
+
+        var report = await runner.RunAsync(ScanRequest.PreFlight(TestData.At(12)), CancellationToken.None);
+
+        Assert.Single(report.Updates);
+        Assert.NotNull(report.UpdatePlan);
+        Assert.Single(report.UpdatePlan!.AutoApplicable);
+        Assert.Contains(
+            report.Diagnosis.Findings,
+            finding => finding.FixPlaybookId == PlaybookIds.UpdatePlaybook(candidate.Id));
+        Assert.Contains(ScanModule.StreamingSoftware, report.ScannedModules);
     }
 
     [Fact]

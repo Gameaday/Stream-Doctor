@@ -45,6 +45,7 @@ public sealed partial class JournaledFixExecutor
             {
                 Kind = entry.ActionKind,
                 Target = entry.Target,
+                DesiredValue = entry.AfterValue,
                 Description = "Rollback of " + entry.Target,
                 DeviceInstanceId = entry.DeviceInstanceId,
             };
@@ -104,6 +105,10 @@ public sealed partial class JournaledFixExecutor
                 failures.Add($"{entry.Target}: the playbook no longer contains this action.");
                 continue;
             }
+
+            // The journal records what was actually written; that is what a revert needs
+            // (for a config backup it is the directory the effector created).
+            action = action with { DesiredValue = entry.AfterValue };
 
             try
             {

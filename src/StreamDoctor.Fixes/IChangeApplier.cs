@@ -14,7 +14,12 @@ public interface IChangeApplier
     /// <summary>Reads the current value (used when the playbook has no known rollback value).</summary>
     Task<string?> ReadAsync(FixAction action, CancellationToken cancellationToken);
 
-    Task ApplyAsync(FixAction action, string? beforeValue, CancellationToken cancellationToken);
+    /// <summary>
+    /// Applies the action and returns the value that was actually written (the new
+    /// installed version, the backup directory, the activated plan…). The executor
+    /// journals that value so rollback has something exact to restore.
+    /// </summary>
+    Task<string?> ApplyAsync(FixAction action, string? beforeValue, CancellationToken cancellationToken);
 
     Task RevertAsync(FixAction action, string? beforeValue, CancellationToken cancellationToken);
 }

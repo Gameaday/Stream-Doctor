@@ -8,6 +8,13 @@ public static class PlaybookIds
     public const string UsbDisableHubPowerSaving = "usb.disable-hub-power-saving";
     public const string SystemHighPerformancePowerPlan = "system.high-performance-power-plan";
     public const string UsbReEnumerateDevice = "usb.re-enumerate-device";
+
+    /// <summary>Prefix for dynamically generated update playbooks.</summary>
+    public const string UpdatePlaybookPrefix = "update:";
+
+    /// <summary>Stable playbook id for one update candidate.</summary>
+    public static string UpdatePlaybook(string candidateId) =>
+        UpdatePlaybookPrefix + candidateId;
 }
 
 /// <summary>How risky a playbook is to apply.</summary>
@@ -32,6 +39,18 @@ public enum FixActionKind
     ServiceStartup,
     ObsWebSocketSetting,
     Manual,
+
+    /// <summary>Copy a configuration directory to a timestamped backup before an update.</summary>
+    ConfigBackup,
+
+    /// <summary>Upgrade a package through winget (signature-verified by Windows).</summary>
+    SoftwareUpdate,
+
+    /// <summary>Install a Windows Update driver, firmware or patch.</summary>
+    WindowsUpdate,
+
+    /// <summary>Create a System Restore point before a driver, firmware or patch install.</summary>
+    RestorePoint,
 }
 
 /// <summary>

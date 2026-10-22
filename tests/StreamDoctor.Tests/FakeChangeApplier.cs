@@ -18,6 +18,10 @@ internal sealed class FakeChangeApplier : IChangeApplier
 
     public bool FailReads { get; init; }
 
+    public Func<FixAction, string?>? AppliedValueFactory { get; init; }
+
+    public List<string?> RevertedDesiredValues { get; } = [];
+
     public bool CanApply(FixAction action) => !Unsupported.Contains(action.Target);
 
     public Task<string?> ReadAsync(FixAction action, CancellationToken cancellationToken) =>
@@ -25,7 +29,7 @@ internal sealed class FakeChangeApplier : IChangeApplier
             ? throw new IOException("cannot read the current value")
             : Task.FromResult(_values.GetValueOrDefault(action.Target));
 
-    public Task ApplyAsync(FixAction action, string? beforeValue, CancellationToken cancellationToken)
+    public Task<string?> ApplyAsync(FixAction action, string? beforeValue, CancellationToken cancellationToken)
     {
         if (FailOnApply.Contains(action.Target))
         {
@@ -34,13 +38,14 @@ internal sealed class FakeChangeApplier : IChangeApplier
 
         _values[action.Target] = action.DesiredValue;
         AppliedTargets.Add(action.Target);
-        return Task.CompletedTask;
+        return Task.FromResult(AppliedValueFactory?.Invoke(action) ?? action.DesiredValue);
     }
 
     public Task RevertAsync(FixAction action, string? beforeValue, CancellationToken cancellationToken)
     {
         _values[action.Target] = beforeValue;
         RevertedTargets.Add(action.Target);
+        RevertedDesiredValues.Add(action.DesiredValue);
         return Task.CompletedTask;
     }
 

@@ -1,5 +1,6 @@
 using StreamDoctor.Core.Model;
 using StreamDoctor.Core.Obs;
+using StreamDoctor.Core.Updates;
 using StreamDoctor.Core.Usb;
 
 namespace StreamDoctor.Core.Diagnosis;
@@ -27,6 +28,12 @@ public sealed record DiagnosisContext
 
     /// <summary>Parsed OBS logs (sessions and events).</summary>
     public ObsLogDocument? Obs { get; init; }
+
+    /// <summary>Updates discovered by the update scan source.</summary>
+    public IReadOnlyList<UpdateCandidate> Updates { get; init; } = [];
+
+    /// <summary>Policy decisions for those updates (auto, approval, notify, blocked).</summary>
+    public UpdatePlan? UpdatePlan { get; init; }
 
     /// <summary>Modules that actually produced data, used to render "not scanned" honestly.</summary>
     public IReadOnlyCollection<ScanModule>? ScannedModules { get; init; }
