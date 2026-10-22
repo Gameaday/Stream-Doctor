@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>StreamDoctor.Fixes</RootNamespace>
+    <AssemblyName>StreamDoctor.Fixes</AssemblyName>
+    <Description>Fix playbooks and the journaled, reversible change executor. Platform effectors are injected, so the logic is testable anywhere.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StreamDoctor.Core\StreamDoctor.Core.csproj" />
+  </ItemGroup>
+
+</Project>

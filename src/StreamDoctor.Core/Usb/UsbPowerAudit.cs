@@ -70,7 +70,13 @@ public static class UsbPowerAudit
 
         foreach (var snapshot in snapshots)
         {
-            var device = byInstanceId.GetValueOrDefault(snapshot.Device.InstanceId) ?? snapshot.Device;
+            // Only audit devices that are actually enumerated right now; stale snapshots
+            // for unplugged gear would produce noise the user cannot act on.
+            if (!byInstanceId.TryGetValue(snapshot.Device.InstanceId, out var device))
+            {
+                continue;
+            }
+
             var settings = snapshot.Settings;
 
             if (settings.IsUnknown)

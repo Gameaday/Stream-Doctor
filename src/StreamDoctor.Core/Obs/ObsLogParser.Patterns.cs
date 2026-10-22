@@ -38,7 +38,7 @@ public static partial class ObsLogParser
     private static partial Regex FpsRegex();
 
     [GeneratedRegex(
-        """Connecting to (?<scheme>[a-z][a-z0-9+.\-]*)://(?<host>[^/\s:]+)""",
+        """Connecting to (?:(?:[A-Za-z]+ )?URL )?(?<scheme>[a-z][a-z0-9+.\-]*)://(?<host>[^/\s:]+)""",
         RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
     private static partial Regex StreamTargetRegex();
 }

@@ -15,6 +15,7 @@ public sealed class UsbDropoutRule : IFindingRule
     private const double BaseWeight = 0.4;
     private const int ResetCorrelationSeconds = 120;
     private const int MaxEvidenceItems = 25;
+    private const int TransientRecoverySeconds = 15;
 
     public string Id => "usb.dropout.correlated";
 
@@ -35,10 +36,19 @@ public sealed class UsbDropoutRule : IFindingRule
             .OrderBy(static evidence => evidence.Timestamp)
             .ToList();
 
+        var reconnects = context.ByCategoryInWindow(ScanEventCodes.ObsSourceReconnected);
+
         foreach (var group in disconnects.GroupBy(static evidence => evidence.DeviceKey ?? "unknown device"))
         {
             var tally = new EvidenceTally();
             var occurrences = group.OrderBy(static evidence => evidence.Timestamp).ToList();
+
+            // A single "invalidated ... Retrying" that succeeds seconds later is OBS
+            // recovering on its own; reporting it would train users to ignore us.
+            if (IsSingleTransientRetry(occurrences, group.Key, reconnects))
+            {
+                continue;
+            }
 
             foreach (var occurrence in occurrences.Take(MaxEvidenceItems))
             {
@@ -93,6 +103,25 @@ public sealed class UsbDropoutRule : IFindingRule
                 }),
             };
         }
+    }
+
+    private static bool IsSingleTransientRetry(
+        List<ScanEvent> occurrences,
+        string device,
+        IReadOnlyList<ScanEvent> reconnects)
+    {
+        if (occurrences.Count != 1)
+        {
+            return false;
+        }
+
+        var disconnect = occurrences[0];
+        var recoveryDeadline = disconnect.Timestamp.AddSeconds(TransientRecoverySeconds);
+
+        return reconnects.Any(reconnect =>
+            string.Equals(reconnect.DeviceKey, device, StringComparison.OrdinalIgnoreCase) &&
+            reconnect.Timestamp >= disconnect.Timestamp &&
+            reconnect.Timestamp <= recoveryDeadline);
     }
 
     private static (string Flag, string Reason, string PlaybookId, ScanEvent Evidence)? FindPowerCause(

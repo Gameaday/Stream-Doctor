@@ -62,7 +62,9 @@ public sealed partial class ObsFrameHealthRule
 
     private static int EffectiveTotal(ObsSessionStats stats) => stats.TotalFrames is > 0
         ? stats.TotalFrames.Value
-        : Math.Max((stats.DroppedFrames ?? 0) + (stats.LaggedFrames ?? 0) + (stats.SkippedFrames ?? 0) + 1, 1);
+        : stats.AttemptedFrames is > 0
+            ? stats.AttemptedFrames.Value
+            : Math.Max((stats.DroppedFrames ?? 0) + (stats.LaggedFrames ?? 0) + (stats.SkippedFrames ?? 0) + 1, 1);
 
     private static double PercentOf(double? reported, int count, int total) =>
         reported ?? (count * 100d / Math.Max(total, 1));

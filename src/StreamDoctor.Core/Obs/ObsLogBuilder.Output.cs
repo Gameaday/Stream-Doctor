@@ -24,7 +24,7 @@ public static partial class ObsLogParser
             {
                 session.SkippedFrames = count ?? session.SkippedFrames;
                 session.SkippedPercent = percent ?? session.SkippedPercent;
-                session.TotalFrames = total ?? session.TotalFrames;
+                session.AttemptedFrames = total ?? session.AttemptedFrames;
             }
 
             AddEvent(

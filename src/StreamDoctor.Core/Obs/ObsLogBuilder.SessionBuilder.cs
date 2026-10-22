@@ -15,6 +15,8 @@ public static partial class ObsLogParser
 
             public int? TotalFrames { get; set; }
 
+            public int? AttemptedFrames { get; set; }
+
             public int? DroppedFrames { get; set; }
 
             public double? DroppedPercent { get; set; }
@@ -30,6 +32,7 @@ public static partial class ObsLogParser
             public ObsSessionStats ToStats() => new()
             {
                 TotalFrames = TotalFrames,
+                AttemptedFrames = AttemptedFrames,
                 DroppedFrames = DroppedFrames,
                 DroppedPercent = DroppedPercent,
                 LaggedFrames = LaggedFrames,

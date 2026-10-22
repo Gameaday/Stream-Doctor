@@ -144,6 +144,6 @@ public sealed class DiagnosisEngine
             scanned.Add(ScanModule.ObsConfig);
         }
 
-        return scanned.Count == 0 ? Enum.GetValues<ScanModule>() : scanned;
+        return scanned;
     }
 }

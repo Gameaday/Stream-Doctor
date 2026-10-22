@@ -15,7 +15,11 @@ public enum ObsSessionKind
 /// </summary>
 public sealed record ObsSessionStats
 {
+    /// <summary>Frames OBS actually output ("Total frames output").</summary>
     public int? TotalFrames { get; init; }
+
+    /// <summary>Frames OBS attempted to render, from the skipped-frames line.</summary>
+    public int? AttemptedFrames { get; init; }
 
     /// <summary>Dropped frames: the network could not keep up (design doc §2.2).</summary>
     public int? DroppedFrames { get; init; }
@@ -34,6 +38,7 @@ public sealed record ObsSessionStats
 
     public bool HasAny =>
         TotalFrames is not null ||
+        AttemptedFrames is not null ||
         DroppedFrames is not null ||
         LaggedFrames is not null ||
         SkippedFrames is not null;
@@ -53,7 +58,19 @@ public sealed record ObsSession
     /// <summary>Events that happened inside this session window.</summary>
     public IReadOnlyList<ScanEvent> Events { get; init; } = [];
 
-    public TimeSpan Duration => (EndedAt ?? StartedAt) - StartedAt;
+    /// <summary>
+    /// Known duration of the session. For a session that never logged a stop marker
+    /// (OBS crashed), this is the time of the last log line, i.e. a lower bound.
+    /// </summary>
+    public TimeSpan Duration
+    {
+        get
+        {
+            var end = EndedAt ?? (Events.Count > 0 ? Events[^1].Timestamp : StartedAt);
+            var duration = end - StartedAt;
+            return duration > TimeSpan.Zero ? duration : TimeSpan.Zero;
+        }
+    }
 
     /// <summary>False when the log ends mid-stream (OBS crashed or was killed).</summary>
     public bool IsComplete => EndedAt is not null;
