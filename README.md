@@ -59,6 +59,8 @@ dotnet test StreamDoctor.Linux.slnf -c Release
 ```
 
 `StreamDoctor.Windows` cross-compiles with `EnableWindowsTargeting`, so the interop layer is compile-checked on Linux CI. `StreamDoctor.App` requires Windows and is excluded from the filter.
+
+**CI:** the workflow is versioned at [`docs/ci/github-actions-ci.yml`](docs/ci/github-actions-ci.yml) (the sandbox's GitHub token cannot create workflow files). Copy it to `.github/workflows/ci.yml` in a checkout with workflow permissions; it builds/tests on Ubuntu and Windows, verifies the committed lock files, scans for vulnerable packages and generates an SBOM.
 ## How a sweep works
 
 ```
