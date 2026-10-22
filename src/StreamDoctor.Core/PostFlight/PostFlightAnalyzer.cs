@@ -139,6 +139,7 @@ public static class DefaultRuleSet
         new UsbPowerRule(),
         new UsbDropoutRule(),
         new UsbTopologyChangeRule(),
+        new UsbDeviceProblemRule(),
         new ObsFrameHealthRule(),
         new ObsPluginFailureRule(),
         new ObsSampleRateRule(),

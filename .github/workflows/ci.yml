@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'cline/**']
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: 'true'
+  DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+
+jobs:
+  build-test:
+    name: Build and test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            filter: StreamDoctor.Linux.slnf
+          - os: windows-latest
+            filter: StreamDoctor.sln
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore ${{ matrix.filter }}
+
+      - name: Verify lock files are current
+        shell: bash
+        run: git diff --exit-code -- '**/packages.lock.json'
+
+      - name: Build
+        run: dotnet build ${{ matrix.filter }} -c Release --no-restore
+
+      - name: Test
+        run: dotnet test ${{ matrix.filter }} -c Release --no-build --logger "trx;LogFileName=test-results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}
+          path: '**/test-results.trx'
+          if-no-files-found: ignore
+
+  security:
+    name: Dependency and SBOM audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore StreamDoctor.Linux.slnf
+
+      - name: Vulnerable packages
+        run: dotnet list StreamDoctor.Linux.slnf package --vulnerable --include-transitive
+
+      - name: Generate SBOM
+        run: |
+          mkdir -p artifacts/sbom
+          dotnet tool install --global Microsoft.Sbom.DotnetTool
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          sbom-tool generate \
+            -b artifacts/sbom \
+            -bc . \
+            -pn StreamDoctor \
+            -pv 0.1.0 \
+            -ps Gameaday \
+            -nsb https://github.com/Gameaday/Stream-Doctor
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: artifacts/sbom

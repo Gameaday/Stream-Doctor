@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <RootNamespace>StreamDoctor.Windows</RootNamespace>
+    <AssemblyName>StreamDoctor.Windows</AssemblyName>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Description>Read-only Windows collectors: USB topology, event logs, power settings, system inventory and OBS logs. All interop lives here.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Windows.CsWin32" PrivateAssets="all" />
+    <PackageReference Include="System.Management" />
+    <PackageReference Include="System.Diagnostics.EventLog" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="NativeMethods.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StreamDoctor.Core\StreamDoctor.Core.csproj" />
+    <ProjectReference Include="..\StreamDoctor.Fixes\StreamDoctor.Fixes.csproj" />
+  </ItemGroup>
+
+</Project>

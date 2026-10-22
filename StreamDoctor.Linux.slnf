@@ -1,0 +1,11 @@
+{
+  "solution": {
+    "path": "StreamDoctor.sln",
+    "projects": [
+      "src\\StreamDoctor.Core\\StreamDoctor.Core.csproj",
+      "src\\StreamDoctor.Fixes\\StreamDoctor.Fixes.csproj",
+      "src\\StreamDoctor.Windows\\StreamDoctor.Windows.csproj",
+      "tests\\StreamDoctor.Tests\\StreamDoctor.Tests.csproj"
+    ]
+  }
+}

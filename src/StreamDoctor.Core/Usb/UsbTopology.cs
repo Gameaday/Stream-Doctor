@@ -76,6 +76,8 @@ public sealed record UsbDevice
 
     public UsbAddress Address => new(ControllerInstanceId, HubInstanceId, PortNumber);
 
+    public int? ProblemCode { get; init; }
+
     /// <summary>True when the device is a peripheral rather than a hub or controller.</summary>
     public bool IsPeripheral => Class is not (UsbDeviceClass.Hub or UsbDeviceClass.HostController);
 }

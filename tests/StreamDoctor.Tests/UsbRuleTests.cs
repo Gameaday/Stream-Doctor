@@ -95,6 +95,40 @@ public sealed class UsbRuleTests
     }
 
     [Fact]
+    public void DeviceProblemRule_SurfacesAMissingDriverAsCritical()
+    {
+        var device = TestData.Device("HD60 X", UsbDeviceClass.CaptureCard);
+
+        var report = TestEvents.Analyze(new DiagnosisContext
+        {
+            Events =
+            [
+                new ScanEvent
+                {
+                    Timestamp = TestData.At(12),
+                    Source = ScanSource.UsbTopology,
+                    Module = ScanModule.UsbSentinel,
+                    Category = ScanEventCodes.UsbDeviceProblem,
+                    Severity = Severity.Warning,
+                    Message = "HD60 X reports a Windows device problem (code 28).",
+                    Payload = new Dictionary<string, string>(StringComparer.Ordinal)
+                    {
+                        [ScanEventPayload.Device] = device.Name,
+                        [ScanEventPayload.DeviceInstanceId] = device.InstanceId,
+                        ["problemCode"] = "28",
+                    },
+                },
+            ],
+        });
+
+        var finding = Assert.Single(report.Findings, candidate => candidate.HypothesisId.StartsWith("usb.device.problem", StringComparison.Ordinal));
+        Assert.Equal(Severity.Critical, finding.Severity);
+        Assert.Contains("HD60 X", finding.Title, StringComparison.Ordinal);
+        Assert.Contains("drivers are not installed", finding.Title, StringComparison.Ordinal);
+        Assert.Equal("28", finding.Data["problemCode"]);
+    }
+
+    [Fact]
     public void BandwidthRule_StaysSilentForAHealthyUsb3Setup()
     {
         var topology = TestData.Topology(

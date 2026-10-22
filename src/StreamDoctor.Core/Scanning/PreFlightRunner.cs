@@ -53,6 +53,11 @@ public sealed class PreFlightRunner
 
                 events.AddRange(result.Events);
                 scanned.Add(source.OwnerModule);
+                foreach (var evidence in result.Events)
+                {
+                    scanned.Add(evidence.Module);
+                }
+
                 topology ??= result.Topology;
                 previousTopology ??= result.PreviousTopology;
                 powerSnapshots.AddRange(result.PowerSnapshots);

@@ -16,6 +16,7 @@ public static class ScanEventCodes
     public const string UsbControllerError = "usb.controller-error";
     public const string UsbPowerFlag = "usb.power.flag";
     public const string UsbTopologyChanged = "usb.topology.changed";
+    public const string UsbDeviceProblem = "usb.device.problem";
 
     // OBS evidence
     public const string ObsStreamStarted = "obs.stream.started";
@@ -80,6 +81,8 @@ public static class ScanEventPayload
     public const string TotalBytes = "totalBytes";
     public const string Version = "version";
     public const string Provider = "provider";
+    public const string LogName = "windows.log";
     public const string EventId = "eventId";
+
     public const string FixPlaybook = "fix.playbook";
 }
