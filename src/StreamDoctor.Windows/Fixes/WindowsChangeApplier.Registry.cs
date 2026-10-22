@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using Microsoft.Win32;
 
@@ -22,7 +23,7 @@ public sealed partial class WindowsChangeApplier
         };
     }
 
-    private static void WriteRegistry(string target, string desiredValue)
+    private static string? WriteRegistry(string target, string desiredValue)
     {
         var (hive, subKey, valueName) = ParseRegistryTarget(target);
 
@@ -38,6 +39,8 @@ public sealed partial class WindowsChangeApplier
         {
             key.SetValue(valueName, desiredValue, RegistryValueKind.String);
         }
+
+        return desiredValue;
     }
 
     private static void RestoreRegistry(string target, string? beforeValue)
@@ -82,5 +85,46 @@ public sealed partial class WindowsChangeApplier
 
         var firstSlash = path.IndexOf('\\');
         return (hive, path[(firstSlash + 1)..], valueName);
+    }
+
+    private static string? SetActivePowerPlan(string schemeGuid)
+    {
+        var output = RunProcess("powercfg", $"/setactive {schemeGuid}")!;
+        return schemeGuid;
+    }
+
+    private static string? ReadActivePowerPlan()
+    {
+        var output = RunProcess("powercfg", "/getactivescheme")!;
+        var start = output.IndexOf('{');
+        var end = output.IndexOf('}');
+
+        return start >= 0 && end > start
+            ? output[(start + 1)..end]
+            : throw new InvalidOperationException("powercfg did not report an active scheme.");
+    }
+
+    private static string? RunProcess(string fileName, string arguments)
+    {
+        using var process = Process.Start(new ProcessStartInfo(fileName, arguments)
+        {
+            CreateNoWindow = true,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        }) ?? throw new InvalidOperationException($"Could not start {fileName}.");
+
+        var stdout = process.StandardOutput.ReadToEnd();
+        var stderr = process.StandardError.ReadToEnd();
+
+        if (!process.WaitForExit(300000))
+        {
+            process.Kill();
+            throw new TimeoutException($"{fileName} did not finish within 300 seconds.");
+        }
+
+        return process.ExitCode == 0
+            ? stdout
+            : throw new InvalidOperationException($"{fileName} exited with {process.ExitCode}: {stderr.Trim()}");
     }
 }
