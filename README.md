@@ -17,6 +17,8 @@ Every streamer knows the ritual: chat freezes, mic cuts out, the encoder stutter
 
 Pre-development. The full product vision, architecture, and feature design live in the [product design document](./Stream-Doctor-Product-Design-Document.md). Built as a C# / .NET / WinUI 3 Windows app.
 
+Planned model: **Free + Pro subscription**. Stream hardware is a moving target — drivers, capture cards, and encoders keep changing — so Stream Doctor ships continuous updates, and a small recurring cost buys you a stream that stays stable.
+
 ## Who it is for
 
 Solo Twitch streamers and small streaming teams who do not have an IT department — anyone who has lost a stream to a mystery USB dropout and never wants to again.
