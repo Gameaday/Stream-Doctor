@@ -77,3 +77,21 @@ Event 400/411 exist for both `USBXHCI` and `USBHUB3` providers with slightly dif
 3. **Per-source timeout:** the runner uses 90 s per collector. A 7-day event-log lookback on a busy machine may need 120 s; measure on real hardware before freezing the value.
 4. **Multi-day post-flight:** the loader reads the three newest OBS logs and picks the one overlapping the stream window. A stream that starts before log rotation needs merged sessions (M2).
 5. **Localization:** every user-facing string is English in the codebase. The design's "explain like a streamer" voice will need a resource file before shipping in other languages.
+
+## 5. M3 progress update (2026-10-24)
+
+- **Re-enumeration is now real and guarded.** `UsbTestBench.ReEnumerateDeviceAsync`
+  uses `CM_Request_Device_Eject` plus a parent-node rescan, and the journaled
+  `WindowsChangeApplier` executes it for `FixActionKind.DeviceReEnumeration`.
+  The previous refusal list still applies before execution (`FixGuard` +
+  `DeviceReEnumerationGuard`), the playbook stays `AutoFixSupported = false`, and
+  the operation is journaled so the change is auditable.
+- **Soak math moved into Core** (`UsbSoakReport`) so the 95% pass threshold, totals
+  and averages are unit-tested rather than living in Windows-only code.
+- **Client-PC stress harness added** (`stress/StressTestRunner` + `docs/stress-testing.md`).
+  It exercises pre-flight sweeps, post-flight debriefs, re-enumeration cycles and
+  soak runs on real hardware. CI only compiles it: re-enumeration needs Windows,
+  admin rights and a device you are willing to power-cycle.
+- **Still open from the original plan:** WinUSB throughput measurement
+  (`MeasureThroughputAsync` currently reports `IsEstimated`), hot-plug port
+  labelling, and the remaining correlation rules for M3.

@@ -56,6 +56,48 @@ public sealed class UsbBandwidthAnalyzerTests
     }
 
     [Fact]
+    public void FindHeadroom_ExcludesControllersThatWouldAlsoSaturate()
+    {
+        var busy = TestData.Controller(
+            "Standard Enhanced PCI to USB Host Controller",
+            UsbControllerKind.Usb2,
+            TestData.Device("Webcam", UsbDeviceClass.Webcam),
+            TestData.Device("Capture Card", UsbDeviceClass.CaptureCard));
+
+        // 3.0 units of capture card already on a 4-unit controller: moving the webcam
+        // there would saturate it too, so it must not be suggested.
+        var nearlyFull = TestData.Controller(
+            "Second Enhanced PCI to USB Host Controller",
+            UsbControllerKind.Usb2,
+            TestData.Device("Second Capture Card", UsbDeviceClass.CaptureCard));
+
+        var loads = UsbBandwidthAnalyzer.Analyze(TestData.Topology(busy, nearlyFull));
+        var headroom = UsbBandwidthAnalyzer.FindHeadroom(loads, loads.Single(load => load.Controller.Name == busy.Name));
+
+        Assert.Empty(headroom);
+    }
+
+    [Fact]
+    public void FindHeadroom_PrefersTheLeastLoadedController()
+    {
+        var busy = TestData.Controller(
+            "Standard Enhanced PCI to USB Host Controller",
+            UsbControllerKind.Usb2,
+            TestData.Device("Webcam", UsbDeviceClass.Webcam),
+            TestData.Device("Capture Card", UsbDeviceClass.CaptureCard));
+        var halfFull = TestData.Controller(
+            "Second USB 3.10 eXtensible Host Controller",
+            UsbControllerKind.Usb3,
+            TestData.Device("Microphone", UsbDeviceClass.Microphone));
+        var empty = TestData.Controller("Third USB 3.10 eXtensible Host Controller", UsbControllerKind.Usb3);
+
+        var loads = UsbBandwidthAnalyzer.Analyze(TestData.Topology(busy, halfFull, empty));
+        var headroom = UsbBandwidthAnalyzer.FindHeadroom(loads, loads.Single(load => load.Controller.Name == busy.Name));
+
+        Assert.Equal(empty.Name, headroom[0].Controller.Name);
+    }
+
+    [Fact]
     public void FindHeadroom_SuggestsAnIdleController()
     {
         var busy = TestData.Controller(

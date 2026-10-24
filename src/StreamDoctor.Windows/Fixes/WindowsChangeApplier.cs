@@ -19,7 +19,8 @@ public sealed partial class WindowsChangeApplier : IChangeApplier
             or FixActionKind.ConfigBackup
             or FixActionKind.SoftwareUpdate
             or FixActionKind.WindowsUpdate
-            or FixActionKind.RestorePoint;
+            or FixActionKind.RestorePoint
+            or FixActionKind.DeviceReEnumeration;
 
     public Task<string?> ReadAsync(FixAction action, CancellationToken cancellationToken)
     {
@@ -36,6 +37,7 @@ public sealed partial class WindowsChangeApplier : IChangeApplier
                     FixActionKind.SoftwareUpdate => Task.FromResult<string?>(GetInstalledVersion(action.Target)),
                     FixActionKind.WindowsUpdate => Task.FromResult<string?>(null),
                     FixActionKind.RestorePoint => Task.FromResult<string?>(null),
+                    FixActionKind.DeviceReEnumeration => Task.FromResult<string?>(null),
                     _ => throw new NotSupportedException($"Cannot read a {action.Kind} action."),
                 };
             },
@@ -57,6 +59,7 @@ public sealed partial class WindowsChangeApplier : IChangeApplier
                     FixActionKind.SoftwareUpdate => Task.FromResult<string?>(UpdateSoftware(action.Target, action.DesiredValue ?? "")),
                     FixActionKind.WindowsUpdate => Task.FromResult<string?>(InstallWindowsUpdate(action.Target, action.DesiredValue ?? "")),
                     FixActionKind.RestorePoint => Task.FromResult<string?>(CreateRestorePoint(action.Target)),
+                    FixActionKind.DeviceReEnumeration => Task.FromResult<string?>(ReEnumerateDevice(action.Target)),
                     _ => throw new NotSupportedException($"Cannot apply a {action.Kind} action."),
                 };
             },
@@ -91,7 +94,10 @@ public sealed partial class WindowsChangeApplier : IChangeApplier
                         // Rollback via restore point
                         break;
                     case FixActionKind.RestorePoint:
-                        // System restore handles this
+                        // A restore point is append-only; there is nothing to undo.
+                        break;
+                    case FixActionKind.DeviceReEnumeration:
+                        // Re-enumeration is not a persistent state change.
                         break;
                     default:
                         throw new NotSupportedException($"Cannot revert a {action.Kind} action.");

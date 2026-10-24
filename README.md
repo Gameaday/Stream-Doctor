@@ -20,10 +20,11 @@ Read the [product design document](Stream-Doctor-Product-Design-Document.md) and
 | Post-flight debrief scoped to the actual stream window, with follow-up checks for the next pre-flight | `Core/PostFlight` |
 | Rules engine with evidence-linked findings, transparent confidence scoring, health score and per-module board | `Core/Diagnosis` |
 | Journaled fix executor: guardrails, dry run, automatic rollback on failure, SQLite journal | `StreamDoctor.Fixes` |
+| USB re-enumeration playbook (guarded, journaled, refusal list) + client-PC stress harness | `StreamDoctor.Windows/Usb` · `stress/` |
 | WinUI 3 dashboard (pre-flight sweep + post-flight debrief) | `StreamDoctor.App` |
 | Transactional USB/Windows collectors | `StreamDoctor.Windows` |
 
-**Not implemented yet:** the active USB test bench (re-enumeration, bandwidth benchmark, soak), OBS WebSocket writes, snapshot/restore, update manager via winget, cloud knowledge base. See the milestone list below.
+**Not implemented yet:** WinUSB throughput measurement (class-based estimates only), hot-plug port labelling, OBS WebSocket writes, snapshot/restore, cloud knowledge base. See the milestone list below and [stress testing](docs/stress-testing.md).
 
 ## Repository layout
 
@@ -32,8 +33,10 @@ src/StreamDoctor.Core        Domain model, USB analyses, OBS parser, rules engin
 src/StreamDoctor.Windows     All CsWin32/WMI/registry/event-log interop and the sweep composition root
 src/StreamDoctor.Fixes       Playbook catalog, guards, journaled executor, SQLite journal, effector interface
 src/StreamDoctor.App         WinUI 3 dashboard (MVVM via CommunityToolkit.Mvvm, Serilog file logging)
-tests/StreamDoctor.Tests     xUnit: 171 tests, golden-file OBS fixtures, fakes for collectors/effectors
+stress/StressTestRunner      Client-PC harness: sweeps, USB re-enumeration, bandwidth, soak
+tests/StreamDoctor.Tests     xUnit: 238 tests, golden-file OBS fixtures, fakes for collectors/effectors
 docs/design-review.md        Review of the product design document and the decisions taken
+docs/stress-testing.md       Client-PC stress matrix, safety rules and result interpretation
 ```
 
 ## Build and test
@@ -59,6 +62,28 @@ dotnet test StreamDoctor.Linux.slnf -c Release
 ```
 
 `StreamDoctor.Windows` cross-compiles with `EnableWindowsTargeting`, so the interop layer is compile-checked on Linux CI. `StreamDoctor.App` requires Windows and is excluded from the filter.
+
+### Stress testing on the streaming PC
+
+The harness in `stress/StressTestRunner` runs the real sweep pipeline plus the USB
+test bench on Windows with admin rights:
+
+```powershell
+# interactive: pick a safe device, run a 30-cycle soak
+.\stressun-stress.ps1 -Mode soak -Iterations 30
+
+# or drive the exe directly
+dotnet build stress/StressTestRunner -c Release
+.\stress\StressTestRunnerin\Release
+et10.0-windows10.0.19041.0\StreamDoctor.StressTest.exe `
+  --mode full --iterations 10 --output .ull.json
+```
+
+Read [docs/stress-testing.md](docs/stress-testing.md) first: it lists the safety
+rules (never target keyboards, mice or hubs), the recommended matrix, and how to
+interpret health drift and soak success rates. CI compiles the harness but never
+runs it — power-cycling hardware needs a real machine.
+
 
 **CI:** the workflow is versioned at [`docs/ci/github-actions-ci.yml`](docs/ci/github-actions-ci.yml) (the sandbox's GitHub token cannot create workflow files). Copy it to `.github/workflows/ci.yml` in a checkout with workflow permissions; it builds/tests on Ubuntu and Windows, verifies the committed lock files, scans for vulnerable packages and generates an SBOM.
 ## How a sweep works
@@ -88,7 +113,7 @@ Everything is evidence-first: a finding without `ScanEvent`s cannot be produced,
 
 - **M1 — Know the machine** ✅ topology map, device inventory, power audit, event-log scan, health board (read-only).
 - **M2 — Know OBS** ✅ log parser, session windowing, post-flight debrief with rules; ⏳ obs-websocket config lint, real-log golden files.
-- **M3 — Prove it** ⏳ USB test bench (re-enumeration, bandwidth, hot-plug, soak), additional correlation rules, evidence UI.
+- **M3 — Prove it** 🟡 re-enumeration playbook + soak harness implemented (see [stress testing](docs/stress-testing.md)); WinUSB throughput measurement, hot-plug port labelling and additional rules still open.
 - **M4 — Make it reversible** ⏳ guided OBS fixes via WebSocket, restore points, test-bench effector for re-enumeration.
 - **M5 — Ship value** ⏳ snapshot/restore with AES-256-GCM, update manager via winget, signed installer.
 
