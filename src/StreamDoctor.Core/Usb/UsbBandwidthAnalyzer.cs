@@ -30,6 +30,12 @@ public sealed record UsbControllerLoad
         (Controller.Kind == UsbControllerKind.Usb2 && IsochronousDeviceCount >= 2);
 }
 
+
+/// <summary>
+/// A concrete rearrangement: which device to move, and where it fits.
+/// </summary>
+public sealed record UsbMoveSuggestion(UsbDevice Device, UsbControllerLoad Destination, double ResultingUtilization);
+
 /// <summary>
 /// Static (non-perturbing) bandwidth planning analysis. Design doc §2.1 asks for
 /// controller-level saturation detection; v1 estimates demand from device class
@@ -65,7 +71,46 @@ public static class UsbBandwidthAnalyzer
             .ToList();
     }
 
-    /// <summary>The idle controllers an overloaded device could move to.</summary>
+    /// <summary>
+    /// Picks one device to move and the controller that can actually host it.
+    /// The old implementation compared the destination against the overloaded
+    /// controller's *entire* load, which over-estimated what a single move frees;
+    /// this walks the devices largest-first and checks each individually.
+    /// </summary>
+    public static UsbMoveSuggestion? SuggestMove(
+        IReadOnlyList<UsbControllerLoad> loads,
+        UsbControllerLoad overloaded)
+    {
+        ArgumentNullException.ThrowIfNull(loads);
+        ArgumentNullException.ThrowIfNull(overloaded);
+
+        foreach (var device in overloaded.Devices.Where(static device => device.BandwidthWeight > 0))
+        {
+            var destination = loads
+                .Where(load => !ReferenceEquals(load.Controller, overloaded.Controller))
+                .Select(load => new
+                {
+                    Load = load,
+                    Utilization = load.Utilization + (device.BandwidthWeight / Math.Max(load.BudgetUnits, 0.001)),
+                })
+                .Where(candidate => candidate.Utilization <= 1.0)
+                .OrderBy(candidate => candidate.Utilization)
+                .ThenBy(candidate => candidate.Load.Controller.Name, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault();
+
+            if (destination is not null)
+            {
+                return new UsbMoveSuggestion(device, destination.Load, destination.Utilization);
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Controllers that could absorb the overloaded controller's whole load.
+    /// Useful for "is there a spare controller at all", not for per-device advice.
+    /// </summary>
     public static IReadOnlyList<UsbControllerLoad> FindHeadroom(
         IReadOnlyList<UsbControllerLoad> loads,
         UsbControllerLoad overloaded)

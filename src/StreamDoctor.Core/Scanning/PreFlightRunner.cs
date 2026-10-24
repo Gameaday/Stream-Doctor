@@ -58,7 +58,32 @@ public sealed class PreFlightRunner
 
             try
             {
-                var result = await source.CollectAsync(request, timeout.Token).ConfigureAwait(false);
+                // Race the collector against its deadline. A collector that ignores the
+                // cancellation token (blocking COM/WMI call) would otherwise hang the sweep.
+                var collectTask = source.CollectAsync(request, timeout.Token);
+                var deadlineTask = Task.Delay(request.SourceTimeout, cancellationToken);
+                var winner = await Task.WhenAny(collectTask, deadlineTask).ConfigureAwait(false);
+
+                if (!ReferenceEquals(winner, collectTask))
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    // Observe the abandoned task so an eventual fault is not unobserved.
+                    _ = collectTask.ContinueWith(
+                        static task => _ = task.Exception,
+                        CancellationToken.None,
+                        TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+                        TaskScheduler.Default);
+
+                    failures.Add(new ScanSourceFailure(
+                        source.Id,
+                        $"Timed out after {request.SourceTimeout.TotalSeconds:0} seconds (collector ignored cancellation).",
+                        TimedOut: true,
+                        source.IsOptional));
+                    continue;
+                }
+
+                var result = await collectTask.ConfigureAwait(false);
 
                 events.AddRange(result.Events);
                 scanned.Add(source.OwnerModule);

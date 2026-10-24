@@ -69,6 +69,69 @@ public sealed class WingetOutputParserTests
     }
 
     [Fact]
+    public void Parse_HandlesANameWiderThanTheHeaderColumn()
+    {
+        const string Table = """
+            Name                              Id                              Version      Available    Source
+            -------------------------------------------------------------------------------------------------
+            Microsoft Visual C++ Redistributable Microsoft.VCRedist.2015+.x64   14.38.33130  14.40.33810  winget
+            """;
+
+        var package = Assert.Single(WingetOutputParser.Parse(Table));
+
+        Assert.Equal("Microsoft Visual C++ Redistributable", package.Name);
+        Assert.Equal("Microsoft.VCRedist.2015+.x64", package.Id);
+        Assert.Equal("14.38.33130", package.InstalledVersion);
+        Assert.Equal("14.40.33810", package.AvailableVersion);
+    }
+
+    [Fact]
+    public void Parse_DoesNotMistakeAVersionForThePackageId()
+    {
+        const string Table = """
+            Name            Id               Version   Available   Source
+            --------------------------------------------------------------
+            My App 2022     MyApp.2022       2022.1    2022.2      winget
+            """;
+
+        var package = Assert.Single(WingetOutputParser.Parse(Table));
+
+        Assert.Equal("MyApp.2022", package.Id);
+        Assert.Equal("My App 2022", package.Name);
+        Assert.Equal("2022.2", package.AvailableVersion);
+    }
+
+    [Fact]
+    public void Parse_HandlesNamesContainingDots()
+    {
+        const string Table = """
+            Name       Id                Version   Available   Source
+            ----------------------------------------------------------
+            Node.js    Nodejs.Nodejs     20.1.0    20.2.0      winget
+            """;
+
+        var package = Assert.Single(WingetOutputParser.Parse(Table));
+
+        Assert.Equal("Nodejs.Nodejs", package.Id);
+        Assert.Equal("Node.js", package.Name);
+    }
+
+    [Fact]
+    public void Parse_HandlesARowWithoutASourceColumn()
+    {
+        const string Table = """
+            Name         Id                  Version   Available
+            ------------------------------------------------------
+            OBS Studio   OBSProject.OBSStudio 31.0.1   31.0.2
+            """;
+
+        var package = Assert.Single(WingetOutputParser.Parse(Table));
+
+        Assert.Equal("OBSProject.OBSStudio", package.Id);
+        Assert.Null(package.Source);
+    }
+
+    [Fact]
     public void FindInstalledVersion_MatchesThePackageIdCaseInsensitively()
     {
         Assert.Equal("31.0.1", WingetOutputParser.FindInstalledVersion(UpgradeTable, "obsproject.obsstudio"));

@@ -56,6 +56,44 @@ public sealed class UsbBandwidthAnalyzerTests
     }
 
     [Fact]
+    public void SuggestMove_NamesASpecificDeviceAndTheLeastLoadedDestination()
+    {
+        var busy = TestData.Controller(
+            "Standard Enhanced PCI to USB Host Controller",
+            UsbControllerKind.Usb2,
+            TestData.Device("Webcam", UsbDeviceClass.Webcam),
+            TestData.Device("Capture Card", UsbDeviceClass.CaptureCard));
+        var idle = TestData.Controller("USB 3.10 eXtensible Host Controller", UsbControllerKind.Usb3);
+
+        var loads = UsbBandwidthAnalyzer.Analyze(TestData.Topology(busy, idle));
+        var move = UsbBandwidthAnalyzer.SuggestMove(loads, loads.Single(load => load.Controller.Name == busy.Name));
+
+        Assert.NotNull(move);
+        Assert.Equal("Capture Card", move.Device.Name);
+        Assert.Equal(idle.Name, move.Destination.Controller.Name);
+        Assert.Equal(0.25, move.ResultingUtilization, precision: 2);
+    }
+
+    [Fact]
+    public void SuggestMove_ReturnsNullWhenNoControllerCanHostEvenOneDevice()
+    {
+        var busy = TestData.Controller(
+            "Standard Enhanced PCI to USB Host Controller",
+            UsbControllerKind.Usb2,
+            TestData.Device("Webcam", UsbDeviceClass.Webcam),
+            TestData.Device("Capture Card", UsbDeviceClass.CaptureCard));
+        var nearlyFull = TestData.Controller(
+            "Second Enhanced PCI to USB Host Controller",
+            UsbControllerKind.Usb2,
+            TestData.Device("Second Capture Card", UsbDeviceClass.CaptureCard));
+
+        var loads = UsbBandwidthAnalyzer.Analyze(TestData.Topology(busy, nearlyFull));
+        var move = UsbBandwidthAnalyzer.SuggestMove(loads, loads.Single(load => load.Controller.Name == busy.Name));
+
+        Assert.Null(move);
+    }
+
+    [Fact]
     public void FindHeadroom_ExcludesControllersThatWouldAlsoSaturate()
     {
         var busy = TestData.Controller(

@@ -22,6 +22,7 @@ TestResults/
 *.DotSettings.user
 
 # Local databases, snapshots and diagnostics output (never commit user data)
+stress-results/
 *.db
 *.db-shm
 *.db-wal

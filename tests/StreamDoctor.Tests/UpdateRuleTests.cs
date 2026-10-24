@@ -39,6 +39,23 @@ public sealed class UpdateRuleTests
     }
 
     [Fact]
+    public void UpdateRule_MentionsARestartWhenThePackageNeedsOne()
+    {
+        var candidate = Candidate("driver-x", "10.0.0", "10.0.1") with
+        {
+            Kind = UpdateKind.Driver,
+            Source = UpdateSource.WindowsUpdate,
+            RequiresRestart = true,
+        };
+
+        var report = TestEvents.Analyze(Context(candidate));
+
+        var finding = Assert.Single(report.Findings, item => item.HypothesisId == "update.available.driver");
+        Assert.Contains("restart", finding.Explanation, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("after the stream", finding.Explanation, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void UpdateRule_LeavesVendorFirmwareAsGuidanceOnly()
     {
         var vendor = Candidate("elgato", null, null) with

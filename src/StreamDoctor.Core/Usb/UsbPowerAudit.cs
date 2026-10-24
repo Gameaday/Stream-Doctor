@@ -24,6 +24,42 @@ public sealed record UsbPowerSettings
         SelectiveSuspendEnabled is null &&
         AllowIdleIrpInD3 is null &&
         EnhancedPowerManagementEnabled is null;
+
+    /// <summary>
+    /// Merges copies read from different registry locations. Windows keeps these
+    /// flags either under the device's Enum key or under its driver key; neither is
+    /// guaranteed to exist, so the first non-null value per flag wins.
+    /// </summary>
+    public static UsbPowerSettings Merge(params UsbPowerSettings?[] sources)
+    {
+        ArgumentNullException.ThrowIfNull(sources);
+
+        bool? selectiveSuspend = null;
+        bool? idleIrpInD3 = null;
+        bool? hubPowerSaving = null;
+        string? sourceKey = null;
+
+        foreach (var source in sources)
+        {
+            if (source is null)
+            {
+                continue;
+            }
+
+            selectiveSuspend ??= source.SelectiveSuspendEnabled;
+            idleIrpInD3 ??= source.AllowIdleIrpInD3;
+            hubPowerSaving ??= source.EnhancedPowerManagementEnabled;
+            sourceKey ??= source.SourceKey;
+        }
+
+        return new UsbPowerSettings
+        {
+            SelectiveSuspendEnabled = selectiveSuspend,
+            AllowIdleIrpInD3 = idleIrpInD3,
+            EnhancedPowerManagementEnabled = hubPowerSaving,
+            SourceKey = sourceKey,
+        };
+    }
 }
 
 /// <summary>A device plus the power flags found for it.</summary>

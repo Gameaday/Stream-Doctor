@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using StreamDoctor.Core.Model;
+using StreamDoctor.Core.Usb;
 
 namespace StreamDoctor.Core.Diagnosis.Rules;
 
@@ -52,10 +53,10 @@ public sealed class UsbDeviceProblemRule : IFindingRule
                 Module = ScanModule.UsbSentinel,
                 Title = $"{device} is not working: {explanation}",
                 Explanation = $"Windows enumerates {device} but cannot use it ({explanation}). Anything that depends on it — OBS sources, game audio, your mic — is silent or missing.",
-                Severity = code == 43 ? Severity.Warning : Severity.Critical,
+                Severity = SeverityFor(ParseClass(latest), code),
                 Confidence = tally.Score(BaseWeight),
                 Evidence = tally.Evidence,
-                RecommendedAction = "Unplug it, try a different port (ideally on a different controller), then update or reinstall its driver. If code 28/31 persists, the driver package is missing.",
+                RecommendedAction = RecommendedActionFor(ParseClass(latest)),
                 Data = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>(StringComparer.Ordinal)
                 {
                     ["target"] = group.Key,
@@ -65,6 +66,36 @@ public sealed class UsbDeviceProblemRule : IFindingRule
             };
         }
     }
+
+    /// <summary>
+    /// A broken printer must not turn the board red. Only classes the stream depends on
+    /// are critical; storage/network are warnings; everything else is advisory.
+    /// </summary>
+    private static Severity SeverityFor(UsbDeviceClass? deviceClass, int? code)
+    {
+        if (code == 43)
+        {
+            return Severity.Warning;
+        }
+
+        return deviceClass switch
+        {
+            null => Severity.Advisory,
+            { } cls when cls.IsStreamCritical() => Severity.Critical,
+            UsbDeviceClass.Storage or UsbDeviceClass.Network => Severity.Warning,
+            _ => Severity.Advisory,
+        };
+    }
+
+    private static string RecommendedActionFor(UsbDeviceClass? deviceClass) => deviceClass is
+        UsbDeviceClass.Webcam or UsbDeviceClass.CaptureCard or UsbDeviceClass.AudioInterface or UsbDeviceClass.Microphone
+        ? "Unplug it, try another port on a different controller, then update or reinstall its driver. Until it works, your stream has no camera or no audio."
+        : "Unplug it, try another port, then update or reinstall its driver. If code 28 or 31 persists, the driver package is missing.";
+
+    private static UsbDeviceClass? ParseClass(ScanEvent evidence) =>
+        Enum.TryParse<UsbDeviceClass>(evidence.GetPayload(ScanEventPayload.DeviceClass), ignoreCase: true, out var cls)
+            ? cls
+            : null;
 
     private static int? ParseCode(ScanEvent evidence) =>
         int.TryParse(evidence.GetPayload("problemCode"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var code)

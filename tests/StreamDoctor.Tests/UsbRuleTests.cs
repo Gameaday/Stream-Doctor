@@ -91,6 +91,8 @@ public sealed class UsbRuleTests
         Assert.Equal(Severity.Critical, saturation.Severity);
         Assert.Contains("Webcam", saturation.Title, StringComparison.Ordinal);
         Assert.Contains(idle.Name, saturation.RecommendedAction!, StringComparison.Ordinal);
+        Assert.Contains("Capture Card", saturation.RecommendedAction!, StringComparison.Ordinal);
+        Assert.Equal("Capture Card", saturation.Data["suggestedDevice"]);
         Assert.NotEmpty(saturation.Evidence);
     }
 
@@ -115,6 +117,7 @@ public sealed class UsbRuleTests
                     {
                         [ScanEventPayload.Device] = device.Name,
                         [ScanEventPayload.DeviceInstanceId] = device.InstanceId,
+                        [ScanEventPayload.DeviceClass] = device.Class.ToString(),
                         ["problemCode"] = "28",
                     },
                 },
@@ -126,6 +129,46 @@ public sealed class UsbRuleTests
         Assert.Contains("HD60 X", finding.Title, StringComparison.Ordinal);
         Assert.Contains("drivers are not installed", finding.Title, StringComparison.Ordinal);
         Assert.Equal("28", finding.Data["problemCode"]);
+    }
+
+    [Theory]
+    [InlineData(UsbDeviceClass.Printer, "28", Severity.Advisory)]
+    [InlineData(UsbDeviceClass.Storage, "10", Severity.Warning)]
+    [InlineData(UsbDeviceClass.Microphone, "28", Severity.Critical)]
+    [InlineData(UsbDeviceClass.CaptureCard, "43", Severity.Warning)]
+    public void DeviceProblemRule_ScalesSeverityByDeviceClass(
+        UsbDeviceClass deviceClass,
+        string problemCode,
+        Severity expected)
+    {
+        var device = TestData.Device("Test Device", deviceClass);
+
+        var report = TestEvents.Analyze(new DiagnosisContext
+        {
+            Events =
+            [
+                new ScanEvent
+                {
+                    Timestamp = TestData.At(12),
+                    Source = ScanSource.UsbTopology,
+                    Module = ScanModule.UsbSentinel,
+                    Category = ScanEventCodes.UsbDeviceProblem,
+                    Severity = Severity.Warning,
+                    Payload = new Dictionary<string, string>(StringComparer.Ordinal)
+                    {
+                        [ScanEventPayload.Device] = device.Name,
+                        [ScanEventPayload.DeviceInstanceId] = device.InstanceId,
+                        [ScanEventPayload.DeviceClass] = device.Class.ToString(),
+                        ["problemCode"] = problemCode,
+                    },
+                },
+            ],
+        });
+
+        var finding = Assert.Single(report.Findings, candidate =>
+            candidate.HypothesisId.StartsWith("usb.device.problem", StringComparison.Ordinal));
+
+        Assert.Equal(expected, finding.Severity);
     }
 
     [Fact]

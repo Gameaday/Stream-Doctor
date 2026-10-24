@@ -42,6 +42,18 @@ public sealed class UpdatePlaybookTests
     }
 
     [Fact]
+    public void Create_ForAnUpdateThatNeedsARestart_SaysSoInThePrerequisites()
+    {
+        var candidate = Candidate("Some.App", "1.0.0", "1.0.1") with { RequiresRestart = true };
+
+        var playbook = UpdatePlaybooks.Create(candidate, null);
+
+        Assert.NotNull(playbook);
+        Assert.Contains(playbook.Prerequisites, prerequisite =>
+            prerequisite.Contains("restart", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public void Create_ForADriver_CreatesARestorePointThenInstalls()
     {
         var candidate = Candidate("driver-1", "10.0.0", "10.0.1") with

@@ -72,11 +72,9 @@ public static class UpdatePlaybooks
             Risk = patchLevel ? FixRisk.Low : FixRisk.Medium,
             AutoFixSupported = patchLevel,
             Actions = actions,
-            Prerequisites =
-            [
-                $"Close {candidate.Name} before updating",
-                "You are not live",
-            ],
+            Prerequisites = candidate.RequiresRestart
+                ? [$"Close {candidate.Name} before updating", "You are not live", "A restart is required after this update"]
+                : [$"Close {candidate.Name} before updating", "You are not live"],
             VerificationHint = "Stream Doctor reads the installed version back after the upgrade; a mismatch fails the fix and restores the backup.",
         };
     }
@@ -111,12 +109,9 @@ public static class UpdatePlaybooks
                     RequiresElevation = true,
                 },
             ],
-            Prerequisites =
-            [
-                "You are not live",
-                "OBS and games are closed",
-                "System Protection is enabled so the restore point succeeds",
-            ],
+            Prerequisites = candidate.RequiresRestart
+                ? ["You are not live", "OBS and games are closed", "System Protection is enabled", "A restart is required after this update"]
+                : ["You are not live", "OBS and games are closed", "System Protection is enabled so the restore point succeeds"],
             VerificationHint = "Windows Update reports success; if the device misbehaves, roll back with the restore point Stream Doctor created.",
         };
     }

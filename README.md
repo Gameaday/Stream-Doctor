@@ -4,7 +4,7 @@ A Windows diagnostic and repair app for Twitch streamers — the pre-flight and 
 
 **v1 never runs during gameplay or while you are live.** No resident agent, no hooking, no kernel driver, no anti-cheat exposure.
 
-Read the [product design document](Stream-Doctor-Product-Design-Document.md) and the [design review](docs/design-review.md) (verdict: no blocking faults; five corrections and one spec gap).
+Read the [product design document](Stream-Doctor-Product-Design-Document.md), the [design review](docs/design-review.md), and the [objective gap analysis](docs/gap-analysis.md).
 
 ---
 
@@ -19,7 +19,7 @@ Read the [product design document](Stream-Doctor-Product-Design-Document.md) and
 | OBS log parsing: session windows, dropped/lagged/skipped frames, scene switches, device dropouts, plugin failures, 44.1 kHz detection — **stream keys are never captured** | `Core/Obs` |
 | Post-flight debrief scoped to the actual stream window, with follow-up checks for the next pre-flight | `Core/PostFlight` |
 | Rules engine with evidence-linked findings, transparent confidence scoring, health score and per-module board | `Core/Diagnosis` |
-| Journaled fix executor: guardrails, dry run, automatic rollback on failure, SQLite journal | `StreamDoctor.Fixes` |
+| Journaled fix executor + `FixCoordinator` (finding → playbook → guarded, journaled change) | `StreamDoctor.Fixes` |
 | USB re-enumeration playbook (guarded, journaled, refusal list) + client-PC stress harness | `StreamDoctor.Windows/Usb` · `stress/` |
 | WinUI 3 dashboard (pre-flight sweep + post-flight debrief) | `StreamDoctor.App` |
 | Transactional USB/Windows collectors | `StreamDoctor.Windows` |
@@ -34,9 +34,10 @@ src/StreamDoctor.Windows     All CsWin32/WMI/registry/event-log interop and the 
 src/StreamDoctor.Fixes       Playbook catalog, guards, journaled executor, SQLite journal, effector interface
 src/StreamDoctor.App         WinUI 3 dashboard (MVVM via CommunityToolkit.Mvvm, Serilog file logging)
 stress/StressTestRunner      Client-PC harness: sweeps, USB re-enumeration, bandwidth, soak
-tests/StreamDoctor.Tests     xUnit: 238 tests, golden-file OBS fixtures, fakes for collectors/effectors
+tests/StreamDoctor.Tests     xUnit: 268 tests, golden-file OBS fixtures, fakes for collectors/effectors
 docs/design-review.md        Review of the product design document and the decisions taken
 docs/stress-testing.md       Client-PC stress matrix, safety rules and result interpretation
+docs/gap-analysis.md         Objective gap list: what is proven, what is still missing
 ```
 
 ## Build and test
@@ -70,7 +71,8 @@ test bench on Windows with admin rights:
 
 ```powershell
 # interactive: pick a safe device, run a 30-cycle soak
-.\stressun-stress.ps1 -Mode soak -Iterations 30
+.\stress
+un-stress.ps1 -Mode soak -Iterations 30
 
 # or drive the exe directly
 dotnet build stress/StressTestRunner -c Release

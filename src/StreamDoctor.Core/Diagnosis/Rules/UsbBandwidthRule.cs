@@ -51,7 +51,7 @@ public sealed class UsbBandwidthRule : IFindingRule
                 tally.Support($"saturated:{controller.InstanceId}", ControllerEvidence(controller, load, capturedAt));
             }
 
-            var headroom = UsbBandwidthAnalyzer.FindHeadroom(loads, load);
+            var move = UsbBandwidthAnalyzer.SuggestMove(loads, load);
             var names = string.Join(", ", isochronous.Select(static device => device.Name));
             var severity = load.IsSaturated
                 ? Severity.Critical
@@ -63,9 +63,9 @@ public sealed class UsbBandwidthRule : IFindingRule
                 ? $"{controller.Name} is estimated at {Percent(load.Utilization)} of its bandwidth with {names} attached. One of them will start dropping out under load."
                 : $"{names} share {controller.Name}, which only has about {Percent(1 - load.Utilization)} headroom left. A saturated controller shows up as mic crackle or a webcam that freezes.";
 
-            var recommendation = headroom.Count > 0
-                ? $"Move one of them to {headroom[0].Controller.Name}, which is at {Percent(headroom[0].Utilization)} load."
-                : "Add a powered USB card or move one device to a different controller; every controller on this machine is close to its budget.";
+            var recommendation = move is not null
+                ? $"Move {move.Device.Name} to {move.Destination.Controller.Name}; that controller would then sit at {Percent(move.ResultingUtilization)} load."
+                : "Add a powered USB card or move one device to a different controller; no controller has room for even a single device from this one.";
 
             yield return new Finding
             {
@@ -83,6 +83,9 @@ public sealed class UsbBandwidthRule : IFindingRule
                     [ScanEventPayload.Controller] = controller.Name,
                     [ScanEventPayload.Devices] = names,
                     [ScanEventPayload.Utilization] = Percent(load.Utilization),
+                    ["suggestedDevice"] = move?.Device.Name ?? string.Empty,
+                    ["suggestedController"] = move?.Destination.Controller.Name ?? string.Empty,
+                    ["suggestedUtilization"] = move is null ? string.Empty : Percent(move.ResultingUtilization),
                 }),
             };
         }

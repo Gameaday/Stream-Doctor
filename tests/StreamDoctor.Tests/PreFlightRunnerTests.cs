@@ -137,6 +137,31 @@ public sealed class PreFlightRunnerTests
     }
 
     [Fact]
+    public async Task RunAsync_TimesOutASourceThatIgnoresCancellation()
+    {
+        // A blocking COM/WMI collector cannot observe the token; the sweep must still finish.
+        var runner = new PreFlightRunner(
+            [
+                new FakeSource("stuck", ScanModule.UsbSentinel, async _ =>
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(30), CancellationToken.None);
+                    return ScanSourceResult.Empty;
+                }),
+            ],
+            new DiagnosisEngine([]));
+
+        var request = ScanRequest.PreFlight(TestData.At(12)) with { SourceTimeout = TimeSpan.FromMilliseconds(100) };
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var report = await runner.RunAsync(request, CancellationToken.None);
+        stopwatch.Stop();
+
+        Assert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(5), $"sweep took {stopwatch.Elapsed}");
+        var failure = Assert.Single(report.Failures);
+        Assert.True(failure.TimedOut);
+        Assert.Contains("ignored cancellation", failure.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task RunAsync_HonoursCancellation()
     {
         using var cancellation = new CancellationTokenSource();

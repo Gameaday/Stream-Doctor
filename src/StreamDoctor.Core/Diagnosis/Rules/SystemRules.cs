@@ -96,30 +96,86 @@ public sealed class WindowsInterferenceRule : IFindingRule
                 continue;
             }
 
-            var tally = new EvidenceTally();
-            foreach (var evidence in events.Take(10))
+            foreach (var group in Group(category, events))
             {
-                tally.Support($"{category}:{evidence.Timestamp:O}:{evidence.Sequence}", evidence);
-            }
-
-            yield return new Finding
-            {
-                HypothesisId = $"{Id}.{category}",
-                Module = ScanModule.WindowsInterference,
-                Title = $"{title} ({events.Count.ToString(CultureInfo.InvariantCulture)}x)",
-                Explanation = explanation,
-                Severity = category == ScanEventCodes.SystemPowerEvent ? Severity.Critical : Severity.Warning,
-                Confidence = tally.Score(BaseWeight),
-                Evidence = tally.Evidence,
-                RecommendedAction = "Set quiet hours for Windows Update and driver updates, and check Reliability Monitor for the same timestamps.",
-                Data = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>(StringComparer.Ordinal)
+                var tally = new EvidenceTally();
+                foreach (var evidence in group.Events.Take(10))
                 {
-                    ["target"] = category,
-                    [ScanEventPayload.Count] = events.Count.ToString(CultureInfo.InvariantCulture),
-                }),
-            };
+                    tally.Support($"{category}:{evidence.Timestamp:O}:{evidence.Sequence}", evidence);
+                }
+
+                var relevant = group.Label is null || IsStreamRelevant(group.Label);
+                var severity = category == ScanEventCodes.SystemPowerEvent
+                    ? Severity.Critical
+                    : category == ScanEventCodes.AppCrashed && !relevant
+                        ? Severity.Advisory
+                        : Severity.Warning;
+
+                yield return new Finding
+                {
+                    HypothesisId = group.Label is null
+                        ? $"{Id}.{category}"
+                        : $"{Id}.{category}.{Slug(group.Label)}",
+                    Module = ScanModule.WindowsInterference,
+                    Title = group.Label is null
+                        ? $"{title} ({group.Events.Count.ToString(CultureInfo.InvariantCulture)}x)"
+                        : $"{group.Label} crashed during your stream ({group.Events.Count.ToString(CultureInfo.InvariantCulture)}x)",
+                    Explanation = group.Label is null
+                        ? explanation
+                        : relevant
+                            ? $"{group.Label} crashed mid-stream. Apps that own a capture device or the encoder cause a visible freeze while Windows restarts them."
+                            : $"{group.Label} crashed mid-stream, but it is not a capture or encoding component, so it is probably unrelated to the stream glitch.",
+                    Severity = severity,
+                    Confidence = tally.Score(BaseWeight),
+                    Evidence = tally.Evidence,
+                    RecommendedAction = relevant
+                        ? "Check Reliability Monitor around these timestamps; update or remove the crashing app before the next stream."
+                        : "No action needed for the stream itself, but the crash is worth reporting to the app vendor.",
+                    Data = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>(StringComparer.Ordinal)
+                    {
+                        ["target"] = group.Label is null ? category : $"{category}:{group.Label}",
+                        [ScanEventPayload.Count] = group.Events.Count.ToString(CultureInfo.InvariantCulture),
+                        [ScanEventPayload.Device] = group.Label ?? string.Empty,
+                    }),
+                };
+            }
         }
     }
+
+    private static IEnumerable<(string? Label, List<ScanEvent> Events)> Group(
+        string category,
+        IReadOnlyList<ScanEvent> events)
+    {
+        if (category != ScanEventCodes.AppCrashed)
+        {
+            yield return (null, events.ToList());
+            yield break;
+        }
+
+        foreach (var group in events.GroupBy(static evidence =>
+                     evidence.GetPayload(ScanEventPayload.Device) ?? "an app"))
+        {
+            yield return (group.Key, group.ToList());
+        }
+    }
+
+    /// <summary>
+    /// Only crashes of stream-path software explain a frozen stream; a random
+    /// background app crashing is noise and is reported as advisory instead.
+    /// </summary>
+    private static bool IsStreamRelevant(string application) => StreamSoftwareHints.Any(hint =>
+        application.Contains(hint, StringComparison.OrdinalIgnoreCase));
+
+    private static readonly string[] StreamSoftwareHints =
+    [
+        "obs", "streamlabs", "xsplit", "elgato", "capture", "camera", "webcam",
+        "voicemeeter", "nvidia broadcast", "icue", "ghub", "synapse", "streamdeck",
+    ];
+
+    private static string Slug(string value) => new(
+        value.ToLowerInvariant()
+            .Select(static character => char.IsLetterOrDigit(character) ? character : '-')
+            .ToArray());
 
     private static readonly (string Category, string Title, string Explanation)[] Checks =
     [

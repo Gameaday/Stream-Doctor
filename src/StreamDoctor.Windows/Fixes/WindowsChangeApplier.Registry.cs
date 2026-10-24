@@ -89,7 +89,13 @@ public sealed partial class WindowsChangeApplier
 
     private static string? SetActivePowerPlan(string schemeGuid)
     {
-        var output = RunProcess("powercfg", $"/setactive {schemeGuid}")!;
+        // Never pass caller-provided text straight into a command line.
+        if (!Guid.TryParse(schemeGuid.Trim('{', '}'), out var guid))
+        {
+            throw new ArgumentException($"'{schemeGuid}' is not a power scheme GUID.", nameof(schemeGuid));
+        }
+
+        _ = RunProcess("powercfg", $"/setactive {guid:D}");
         return schemeGuid;
     }
 

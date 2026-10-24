@@ -60,6 +60,66 @@ public sealed class SystemRuleTests
     }
 
     [Fact]
+    public void WindowsInterferenceRule_KeepsObsCrashesAsWarnings()
+    {
+        var crash = new ScanEvent
+        {
+            Timestamp = TestData.At(21),
+            Source = ScanSource.WindowsEventLog,
+            Module = ScanModule.WindowsInterference,
+            Category = ScanEventCodes.AppCrashed,
+            Severity = Severity.Warning,
+            Payload = new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                [ScanEventPayload.Device] = "obs64.exe",
+            },
+        };
+
+        var report = TestEvents.Analyze(new DiagnosisContext
+        {
+            Events = [crash],
+            WindowStart = TestData.At(20),
+            WindowEnd = TestData.At(22),
+        });
+
+        var finding = Assert.Single(report.Findings, candidate =>
+            candidate.HypothesisId.StartsWith("windows.interference", StringComparison.Ordinal));
+
+        Assert.Equal(Severity.Warning, finding.Severity);
+        Assert.Contains("obs64.exe", finding.Title, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void WindowsInterferenceRule_DowngradesUnrelatedCrashesToAdvisory()
+    {
+        var crash = new ScanEvent
+        {
+            Timestamp = TestData.At(21),
+            Source = ScanSource.WindowsEventLog,
+            Module = ScanModule.WindowsInterference,
+            Category = ScanEventCodes.AppCrashed,
+            Severity = Severity.Warning,
+            Payload = new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                [ScanEventPayload.Device] = "notepad.exe",
+            },
+        };
+
+        var report = TestEvents.Analyze(new DiagnosisContext
+        {
+            Events = [crash],
+            WindowStart = TestData.At(20),
+            WindowEnd = TestData.At(22),
+        });
+
+        var finding = Assert.Single(report.Findings, candidate =>
+            candidate.HypothesisId.StartsWith("windows.interference", StringComparison.Ordinal));
+
+        Assert.Equal(Severity.Advisory, finding.Severity);
+        Assert.Contains("not a capture or encoding component", finding.Explanation, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void WindowsInterferenceRule_EscalatesAPowerEventToCritical()
     {
         var report = TestEvents.Analyze(new DiagnosisContext

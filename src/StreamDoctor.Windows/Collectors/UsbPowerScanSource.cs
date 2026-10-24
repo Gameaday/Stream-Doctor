@@ -40,21 +40,28 @@ public sealed class UsbPowerScanSource : IScanSource
 
     private static UsbPowerSettings ReadSettings(UsbDevice device)
     {
-        var instanceKey = $@"SYSTEM\CurrentControlSet\Enum\{device.InstanceId}\Device Parameters";
+        // These flags live either under the device's Enum key or under its driver key,
+        // depending on the driver. Read both; first non-null value per flag wins.
+        var enumKey = $@"SYSTEM\CurrentControlSet\Enum\{device.InstanceId}\Device Parameters";
+        var driverKey = device.DriverKey is null
+            ? null
+            : $@"SYSTEM\CurrentControlSet\Control\Class\{device.DriverKey}\Device Parameters";
 
-        using var key = Registry.LocalMachine.OpenSubKey(instanceKey);
-        if (key is null)
-        {
-            return new UsbPowerSettings { SourceKey = instanceKey };
-        }
+        return UsbPowerSettings.Merge(ReadKey(enumKey), driverKey is null ? null : ReadKey(driverKey));
+    }
 
-        return new UsbPowerSettings
-        {
-            SelectiveSuspendEnabled = ReadFlag(key, "SelectiveSuspendEnabled"),
-            AllowIdleIrpInD3 = ReadFlag(key, "AllowIdleIrpInD3"),
-            EnhancedPowerManagementEnabled = ReadFlag(key, "EnhancedPowerManagementEnabled"),
-            SourceKey = instanceKey,
-        };
+    private static UsbPowerSettings? ReadKey(string path)
+    {
+        using var key = Registry.LocalMachine.OpenSubKey(path);
+        return key is null
+            ? null
+            : new UsbPowerSettings
+            {
+                SelectiveSuspendEnabled = ReadFlag(key, "SelectiveSuspendEnabled"),
+                AllowIdleIrpInD3 = ReadFlag(key, "AllowIdleIrpInD3"),
+                EnhancedPowerManagementEnabled = ReadFlag(key, "EnhancedPowerManagementEnabled"),
+                SourceKey = path,
+            };
     }
 
     private static bool? ReadFlag(RegistryKey key, string name) => key.GetValue(name) switch

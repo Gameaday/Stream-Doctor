@@ -38,7 +38,11 @@ public sealed partial class UpdateAvailableRule
             _ => string.Empty,
         };
 
-        return $"Available through {source}. {why} {planned.Reason}";
+        var restart = candidate.RequiresRestart
+            ? " A restart is required afterwards, so apply it after the stream, not before one."
+            : string.Empty;
+
+        return $"Available through {source}. {why} {planned.Reason}{restart}";
     }
 
     private static Severity MapSeverity(UpdateCandidate candidate, PlannedUpdate planned)

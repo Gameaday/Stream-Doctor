@@ -62,7 +62,7 @@ public sealed class FindingViewModel
         ConfidenceText = $"{(finding.Confidence * 100):0}% confidence";
 
         ActionText = finding.IsActionable
-            ? "Fix available: open the Fix Wizard and Stream Doctor will journal the change so it can be undone."
+            ? "Fix available: Stream Doctor can apply this as a journaled, reversible change."
             : finding.RecommendedAction ?? "No automated fix; follow the explanation above.";
 
         EvidenceText = finding.Occurrences == 1

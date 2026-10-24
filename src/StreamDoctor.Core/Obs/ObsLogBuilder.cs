@@ -72,7 +72,7 @@ public static partial class ObsLogParser
             }
 
             var timestamp = ResolveTimestamp(time);
-            var message = match.Groups["message"].Value;
+            var message = match.Groups["message"].Value.TrimEnd();
 
             if (_version is null)
             {

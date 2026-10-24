@@ -100,6 +100,25 @@ public sealed class ObsLogParserEdgeCaseTests
     }
 
     [Fact]
+    public void Parse_ToleratesTrailingWhitespaceOnStatLines()
+    {
+        const string Log = """
+            20:00:00.000: ==== Streaming Start ===============================================   
+            20:01:00.000: Output 'simple_stream': Total frames output: 100   
+            20:01:00.000: Output 'simple_stream': Number of dropped frames due to insufficient bandwidth: 5 (5.0%)   
+            20:02:00.000: ==== Streaming Stop ==========================================
+            """;
+
+        var document = ObsLogParser.Parse(Log, TestData.LogDate, TimeZoneInfo.Utc);
+        var session = Assert.Single(document.Sessions);
+
+        Assert.True(session.IsComplete);
+        Assert.Equal(100, session.Stats.TotalFrames);
+        Assert.Equal(5, session.Stats.DroppedFrames);
+        Assert.Equal(5.0, session.Stats.DroppedPercent);
+    }
+
+    [Fact]
     public void Parse_DuplicateStartMarker_ClosesThePreviousSession()
     {
         const string Log = """
